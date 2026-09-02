@@ -9,20 +9,20 @@ An in-memory blockchain application leveraging SHA-256 and Merkle Trees to secur
 ## System Architecture
 ```mermaid
 graph TD
-    A([💻 Client Browser <br/> Vanilla JS/HTML])
-    B[🌐 API Gateway <br/> com.sun.net.httpserver]
-    C(JSON Extraction)
-    D{🛡️ HashSet Validator <br/> O(1) Check}
-    E[(📥 In-Memory Buffer <br/> ArrayList)]
-    F[🌳 Merkle Tree Engine <br/> SHA-256 Recursion]
-    G[(⛓️ Cryptographic Linked List <br/> Blockchain Ledger)]
+    A(["💻 Client Browser <br/> Vanilla JS/HTML"])
+    B["🌐 API Gateway <br/> com.sun.net.httpserver"]
+    C("JSON Extraction")
+    D{"🛡️ HashSet Validator <br/> O(1) Check"}
+    E[("📥 In-Memory Buffer <br/> ArrayList")]
+    F["🌳 Merkle Tree Engine <br/> SHA-256 Recursion"]
+    G[("⛓️ Cryptographic Linked List <br/> Blockchain Ledger")]
 
-    A -- HTTP POST /api/vote --> B
+    A -->|"HTTP POST /api/vote"| B
     B --> C
     C --> D
-    D -- Valid Vote --> E
-    E -- Batch Limit Reached --> F
-    F -- Block Sealing --> G
+    D -->|"Valid Vote"| E
+    E -->|"Batch Limit Reached"| F
+    F -->|"Block Sealing"| G
 
     style A fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
     style B fill:#1e293b,stroke:#64748b,stroke-width:2px,color:#fff
