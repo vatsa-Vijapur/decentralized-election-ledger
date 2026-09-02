@@ -12,7 +12,7 @@ graph TD
     A([💻 Client Browser <br/> Vanilla JS/HTML])
     B[🌐 API Gateway <br/> com.sun.net.httpserver]
     C(JSON Extraction)
-    D{🛡️ HashSet Validator <br/> O1 Check}
+    D{🛡️ HashSet Validator <br/> O(1) Check}
     E[(📥 In-Memory Buffer <br/> ArrayList)]
     F[🌳 Merkle Tree Engine <br/> SHA-256 Recursion]
     G[(⛓️ Cryptographic Linked List <br/> Blockchain Ledger)]
