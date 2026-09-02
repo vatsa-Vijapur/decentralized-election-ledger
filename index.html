@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decentralized Election Ledger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --surface: #111827;
+            --surface-hover: #1f2937;
+            --border: #374151;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #172554 0%, var(--bg) 60%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .brand {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .brand span {
+            color: var(--text);
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 12px 16px;
+            text-align: left;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+            transform: translateX(4px);
+        }
+
+        .nav-btn.active {
+            background: var(--surface-hover);
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 12px 0;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header-ribbon {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 24px 32px 0 32px;
+        }
+
+        .metric-card {
+            background: rgba(17, 24, 39, 0.7);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 10px;
+        }
+
+        .metric-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-top: 4px;
+            color: var(--text);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+        }
+
+        .tab-panel {
+            display: none;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: 0.3s;
+        }
+
+        .tab-panel.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card {
+            background: rgba(17, 24, 39, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: 0.3s;
+        }
+
+        .card-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            background: #060913;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            filter: brightness(1.15);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-secondary { background: var(--border); }
+
+        .chain-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .block-node {
+            background: #0d1322;
+            border: 1px solid var(--border);
+            border-left: 5px solid var(--accent);
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+
+        .block-node.corrupted {
+            border-left-color: var(--danger);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .hash-tag {
+            color: var(--warning);
+            word-break: break-all;
+        }
+
+        .terminal-box {
+            background: #040711;
+            border: 1px solid #1f2937;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            color: #10b981;
+            font-size: 0.85rem;
+            min-height: 180px;
+            overflow-y: auto;
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        /* TOAST NOTIFICATION CSS */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: #1f2937;
+            padding: 16px 24px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            animation: toastIn 0.3s ease-out forwards, toastOut 0.3s ease-in 3.7s forwards;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        .toast.error { border-left-color: var(--danger); }
+        .toast.success { border-left-color: var(--success); }
+        .toast.warning { border-left-color: var(--warning); }
+
+        @keyframes toastIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes toastOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .progress-track {
+            height: 12px;
+            background: #1f2937;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="brand">
+        <span>ELECLOGIC // LEDGER</span>
+    </div>
+
+    <button class="nav-btn active" onclick="switchTab('tab-manual', this)">
+        <span>1. Single Voter Portal</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-simulator', this)">
+        <span>2. Dynamic Election Run</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-explorer', this)">
+        <span>3. Ledger Explorer</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-tally', this)">
+        <span>4. Results & Tally</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-hacker', this)">
+        <span>5. Red Team Terminal</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
+
+    <button class="btn btn-secondary" onclick="runCryptographicAudit()" style="width: 100%;">
+        Audit Ledger State
+    </button>
+    <button class="btn btn-danger" onclick="resetBlockchain()" style="width: 100%; margin-top: 8px; font-size: 0.8rem;">
+        Reset Blockchain
+    </button>
+</div>
+
+<div class="main-container">
+
+    <div class="header-ribbon">
+        <div class="metric-card">
+            <div class="metric-title">Sealed Blocks</div>
+            <div class="metric-value" id="stat-blocks">1</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Pending in Buffer</div>
+            <div class="metric-value" id="stat-pending" style="color: var(--warning);">0</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Integrity Status</div>
+            <div class="metric-value" id="stat-status" style="color: var(--success); font-size: 1.1rem; padding-top: 4px;">SECURE</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Leader</div>
+            <div class="metric-value" id="stat-leader" style="font-size: 1.1rem; color: var(--accent); padding-top: 4px;">-</div>
+        </div>
+    </div>
+
+    <div class="content-area">
+
+        <!-- Tab: Single Voter Portal -->
+        <div id="tab-manual" class="tab-panel active">
+            <div class="card">
+                <div class="card-header">Interactive Voter Terminal</div>
+
+                <label>Voter ID</label>
+                <input type="text" id="manualVoterId" placeholder="e.g., Voter_101">
+
+                <label>Candidate</label>
+                <select id="manualCandidate">
+                    <option value="Malla Reddy">Malla Reddy</option>
+                    <option value="M.K. Stalin">M.K. Stalin</option>
+                    <option value="Pawan Kalyan">Pawan Kalyan</option>
+                    <option value="Balayya Babu">Balayya Babu</option>
+                    <option value="Yogi Bhai">Yogi Bhai</option>
+                    <option value="Mamata Didi">Mamata Didi</option>
+                    <option value="Jagan Reddy">Jagan Reddy</option>
+                    <option value="Rahul Gandhi">Rahul Gandhi</option>
+                    <option value="Ravi Kishan">Ravi Kishan</option>
+                    <option value="VD Sateeshan">VD Sateeshan</option>
+                    <option value="NOTA">NOTA</option>
+                </select>
+
+                <button class="btn" onclick="castVote(event)">Submit Vote</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Block Minting</div>
+                <button class="btn btn-success" onclick="sealBlock()">Seal Batch into Block</button>
+            </div>
+        </div>
+
+        <!-- Tab: Dynamic Election Run -->
+        <div id="tab-simulator" class="tab-panel">
+            <div class="card">
+                <div class="card-header">Dynamic Constituency Simulator</div>
+                <p style="color: var(--text-muted); margin-bottom: 16px;">
+                    This physically loads a random number of votes into the buffer, holds them, and mathematically seals them into a variable number of blocks.
+                </p>
+                <button class="btn btn-success" id="sim-btn" onclick="simulateBulkVotes()">Start Live Election Run</button>
+
+                <!-- Live Loading Bar -->
+                <div id="sim-progress-container" style="display: none; margin-top: 24px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--warning); font-weight: bold;">
+                        <span id="sim-status-text">Connecting to Node...</span>
+                        <span id="sim-percentage">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="sim-progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Ledger Explorer -->
+        <div id="tab-explorer" class="tab-panel">
+            <div class="card-header">
+                <span>Synchronized Blockchain Ledger</span>
+                <button class="btn btn-secondary" onclick="updateDashboard()" style="font-size: 0.8rem; padding: 6px 12px;">Refresh</button>
+            </div>
+            <div class="chain-flow" id="chain-display"></div>
+        </div>
+
+        <!-- Tab: Results & Tally -->
+        <div id="tab-tally" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <span>Dynamic Winner Declaration</span>
+                    <span id="winner-tag" style="color: var(--success); font-weight: 800;"></span>
+                </div>
+                <div id="tally-bars"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Red Team Terminal -->
+        <div id="tab-hacker" class="tab-panel">
+            <div class="card" id="hacker-card" style="border-color: var(--danger); transition: box-shadow 0.3s;">
+                <div class="card-header" style="color: var(--danger);">Memory Injection & Merkle Root Forgery</div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label>Target Block Index</label>
+                        <input type="number" id="hackBlock" placeholder="e.g., 1" min="1">
+                    </div>
+                    <div>
+                        <label>Vote Index</label>
+                        <input type="number" id="hackVote" placeholder="e.g., 0" min="0">
+                    </div>
+                </div>
+
+                <label>Forged Vote Payload</label>
+                <input type="text" id="hackPayload" placeholder="e.g., Hacker:Satoru Gojo">
+
+                <button class="btn btn-danger" onclick="executeHack()">Execute Memory Exploit</button>
+
+                <!-- Immediate Error Notification Box -->
+                <div id="hacker-alert" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 14px; border-radius: 8px; margin-top: 16px; font-weight: 700;">
+                    ⚠️ SYSTEM DEFENSE TRIGGERED: Merkle Root Forgery Blocked by Ledger Lock!
+                </div>
+
+                <div class="terminal-box" id="hacker-terminal-output">
+                    > Hacker Console Ready. Enter target parameters and execute exploit payload...
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+    // Utility for Hacker Terminal Delays
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Toast Notification Function
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerText = message;
+
+        container.appendChild(toast);
+
+        // Automatically remove the toast after animation completes (4s)
+        setTimeout(() => {
+            toast.remove();
+        }, 4000);
+    }
+
+    // Tab Switching Logic
+    function switchTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-panel').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if (btnElement) btnElement.classList.add('active');
+        updateDashboard();
+    }
+
+    // Fetch and Update the Dashboard State
+    async function updateDashboard() {
+        try {
+            const response = await fetch('/api/state');
+            const data = await response.json();
+
+            // Update Header Metrics
+            document.getElementById('stat-blocks').innerText = data.blocks.length;
+            document.getElementById('stat-pending').innerText = data.pendingVotes;
+
+            // Update Chain Status
+            const statusEl = document.getElementById('stat-status');
+            if (data.isChainValid) {
+                statusEl.innerText = "SECURE";
+                statusEl.style.color = "#10b981";
+            } else {
+                statusEl.innerText = "COMPROMISED";
+                statusEl.style.color = "#ef4444";
+            }
+
+            // Render Blockchain Ledger
+            const blocksContainer = document.getElementById('chain-display');
+            if (blocksContainer) {
+                blocksContainer.innerHTML = '';
+                data.blocks.forEach((block, idx) => {
+                    const isCorrupted = !data.isChainValid && idx > 0;
+                    blocksContainer.innerHTML += `
+                        <div class="block-node ${isCorrupted ? 'corrupted' : ''}">
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                                <strong>BLOCK #${block.index} ${block.index === 0 ? '(GENESIS)' : ''}</strong>
+                            </div>
+                            <div><strong>PREV HASH:</strong> <span class="hash-tag">${block.previousHash}</span></div>
+                            <div><strong>BLOCK HASH:</strong> <span class="hash-tag">${block.hash}</span></div>
+                            <div><strong>MERKLE ROOT:</strong> <span class="hash-tag">${block.merkleRoot || 'N/A'}</span></div>
+                            <div style="margin-top: 8px; color: var(--text-muted);">
+                                <strong>VOTES (${block.votes.length}):</strong> ${block.votes.join(' | ')}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Calculate Winner and Render Tally
+            let highestVotes = 0;
+            let winner = "Waiting for data...";
+            let isTie = false;
+
+            const tallyContainer = document.getElementById('tally-bars');
+            if (tallyContainer) tallyContainer.innerHTML = '';
+
+            // Calculate total votes for percentage
+            let totalVotes = 0;
+            for (const count of Object.values(data.tallies)) totalVotes += count;
+
+            for (const [candidate, count] of Object.entries(data.tallies)) {
+                if (tallyContainer) {
+                    const pct = totalVotes > 0 ? ((count / totalVotes) * 100).toFixed(1) : 0;
+                    tallyContainer.innerHTML += `
+                        <div style="margin-bottom: 12px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-weight:600;">
+                                <span>${candidate}</span>
+                                <span>${count} votes (${pct}%)</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: ${pct}%;"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (count > highestVotes) {
+                    highestVotes = count;
+                    winner = candidate;
+                    isTie = false;
+                } else if (count === highestVotes && count > 0) {
+                    isTie = true;
+                }
+            }
+
+            // Display Winner Status
+            const winnerDisplay = document.getElementById('winner-tag');
+            const leaderDisplay = document.getElementById('stat-leader');
+
+            if (highestVotes === 0) {
+                if (winnerDisplay) winnerDisplay.innerText = "No Votes Cast";
+                if (leaderDisplay) leaderDisplay.innerText = "-";
+            } else if (isTie) {
+                if (winnerDisplay) {
+                    winnerDisplay.innerText = "RESULT: TIE";
+                    winnerDisplay.style.color = "var(--warning)";
+                }
+                if (leaderDisplay) leaderDisplay.innerText = "TIE";
+            } else {
+                if (winnerDisplay) {
+                    winnerDisplay.innerText = "WINNER: " + winner;
+                    winnerDisplay.style.color = "var(--success)";
+                }
+                if (leaderDisplay) leaderDisplay.innerText = `${winner} (${highestVotes})`;
+            }
+
+        } catch (error) {
+            console.error("Error fetching state:", error);
+        }
+    }
+
+    // Submit a Single Vote
+    async function castVote(event) {
+        event.preventDefault();
+        const voterId = document.getElementById('manualVoterId').value;
+        const candidate = document.getElementById('manualCandidate').value;
+
+        if (!voterId) {
+            showToast("Please enter a valid Voter ID", "error");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/vote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ voterId, candidate })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success" || !result.error) {
+                showToast(result.message || "Vote securely recorded!", "success");
+                document.getElementById('manualVoterId').value = '';
+                updateDashboard();
+            } else {
+                showToast(result.message || "Error casting vote", "error");
+            }
+        } catch (error) {
+            showToast("Failed to cast vote. Ensure backend server is running.", "error");
+        }
+    }
+
+    async function simulateBulkVotes() {
+    const btn = document.getElementById('sim-btn');
+    const progCont = document.getElementById('sim-progress-container');
+    const progBar = document.getElementById('sim-progress-bar');
+    const statusTxt = document.getElementById('sim-status-text');
+    const pctTxt = document.getElementById('sim-percentage');
+
+    btn.disabled = true;
+    progCont.style.display = 'block';
+
+    const numConstituencies = Math.floor(Math.random() * 3) + 3;
+
+    try {
+        for (let i = 1; i <= numConstituencies; i++) {
+            const voters = Math.floor(Math.random() * 25) + 10;
+
+            statusTxt.innerText = `Block ${i}/${numConstituencies}: Receiving ${voters} Votes...`;
+            progBar.style.width = '10%';
+            pctTxt.innerText = '10%';
+
+            await fetch('/api/bulk_vote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ count: voters.toString() })
+            });
+            await updateDashboard();
+
+            statusTxt.innerText = `Block ${i}/${numConstituencies}: Sealing Merkle Root & Generating Hash...`;
+            for(let p = 15; p <= 100; p += 5) {
+                progBar.style.width = p + '%';
+                pctTxt.innerText = p + '%';
+                await sleep(125);
+            }
+
+            await fetch('/api/seal', { method: 'POST' });
+            await updateDashboard();
+        }
+
+        showToast("Dynamic Election Simulation Complete!", "success");
+    } catch (error) {
+        showToast("Simulation failed. Check backend connection.", "error");
+    }
+
+    progCont.style.display = 'none';
+    btn.disabled = false;
+}
+
+    // Seal the Block
+    async function sealBlock() {
+        try {
+            await fetch('/api/seal', { method: 'POST' });
+            showToast("Batch successfully sealed into a new Blockchain Block", "success");
+            updateDashboard();
+        } catch (error) {
+            showToast("Failed to seal block. Ensure buffer has pending votes.", "error");
+        }
+    }
+
+    // Cryptographic Audit
+    async function runCryptographicAudit() {
+        try {
+            const response = await fetch('/api/audit', { method: 'POST' });
+            const result = await response.json();
+
+            if (result.isValid) {
+                showToast("AUDIT PASSED: Blockchain is secure and mathematically verified.", "success");
+            } else {
+                showToast(`CRITICAL FAILURE: Integrity broken at Block ${result.brokenBlockIndex}.`, "error");
+            }
+
+            updateDashboard();
+        } catch (error) {
+            showToast("Failed to run audit. Ensure backend server is running.", "error");
+        }
+    }
+
+    // Reset Blockchain
+    async function resetBlockchain() {
+        try {
+            await fetch('/api/reset', { method: 'POST' });
+            document.getElementById('hacker-alert').style.display = 'none';
+            document.getElementById('hacker-terminal-output').innerHTML = '> Hacker Console Ready...';
+            showToast("Ledger Reset to Genesis Block", "success");
+            updateDashboard();
+        } catch (error) {
+            showToast("Failed to reset blockchain.", "error");
+        }
+    }
+
+    // Red Team / Hacker Terminal Logic
+    async function executeHack() {
+        const terminal = document.getElementById('hacker-terminal-output');
+        const blockIndex = document.getElementById('hackBlock').value;
+        const voteIndex = document.getElementById('hackVote').value;
+        const fakeData = document.getElementById('hackPayload').value;
+
+        if (!blockIndex || !voteIndex || !fakeData) {
+            showToast("Please fill in all hacker terminal fields.", "error");
+            return;
+        }
+
+        terminal.innerHTML = "<span style='color: #ef4444;'>[!] Initiating Memory Injection Payload...</span><br>";
+        await sleep(1000);
+
+        terminal.innerHTML += `<span style='color: #fbbf24;'>[!] Targeting Block ${blockIndex} memory space...</span><br>`;
+        await sleep(1500);
+
+        try {
+            const response = await fetch('/api/tamper', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    blockIndex: blockIndex,
+                    voteIndex: voteIndex,
+                    fakeData: fakeData
+                })
+            });
+
+            terminal.innerHTML += "<span style='color: #10b981;'>[!] Data successfully overwritten in RAM.</span><br>";
+            await sleep(1500);
+
+            terminal.innerHTML += "<span style='color: #ef4444;'>[X] ALERT: System detected broken Merkle pointers!</span><br>";
+            await sleep(1000);
+
+            terminal.innerHTML += "<span>>> Running mandatory cryptographic audit...</span><br>";
+            await sleep(2000);
+
+            const auditResponse = await fetch('/api/audit', { method: 'POST' });
+            const auditResult = await auditResponse.json();
+
+            if (!auditResult.isValid) {
+                terminal.innerHTML += `<span style='color: #ef4444; font-weight: bold;'>[CRITICAL] Audit failed! Block ${auditResult.brokenBlockIndex} decoupled from chain. Attack isolated.</span>`;
+                document.getElementById('hacker-alert').style.display = 'block';
+                showToast("System Defense Triggered: Exploit Blocked!", "error");
+            }
+
+            updateDashboard();
+        } catch (error) {
+            terminal.innerHTML += `<span style='color: #ef4444;'>[!] Connection to node failed. Ensure backend is running.</span><br>`;
+            showToast("Exploit failed to connect to node.", "error");
+        }
+    }
+
+    // Run automatically on page load
+    window.onload = updateDashboard;
+</script>
+</body>
+</html>
