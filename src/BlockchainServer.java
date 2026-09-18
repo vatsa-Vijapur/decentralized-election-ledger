@@ -139,7 +139,6 @@ public class BlockchainServer {
         }
     }
 
-    // NEW: Adds N random votes to the buffer for a dynamic constituency
     static class BulkVoteHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -195,7 +194,6 @@ public class BlockchainServer {
                 Block current = electionChain.chain.get(i);
                 Block previous = electionChain.chain.get(i - 1);
 
-                // 1. Verify the votes haven't been decoupled from the Merkle Root
                 MerkleTree checkTree = new MerkleTree(current.votes);
                 if (!current.merkleRoot.equals(checkTree.getRoot())) {
                     valid = false;
@@ -203,14 +201,12 @@ public class BlockchainServer {
                     break;
                 }
 
-                // 2. Verify the Block Hash hasn't been decoupled from the Merkle Root & Timestamp
                 if (!current.hash.equals(current.calculateBlockHash())) {
                     valid = false;
                     brokenIndex = i;
                     break;
                 }
 
-                // 3. Verify the Previous Hash pointer matches the previous block
                 if (!current.previousHash.equals(previous.hash)) {
                     valid = false;
                     brokenIndex = i;
@@ -240,14 +236,7 @@ public class BlockchainServer {
                     sendJsonResponse(t, 400, "{\"status\":\"error\",\"message\":\"Target vote index out of bounds.\"}");
                     return;
                 }
-
-                // Inject tampering into the data string
                 hackedBlock.votes.set(vIndex, fakeData);
-
-                // NEW: Intentionally DO NOT recalculate the Merkle Root to simulate active defense failure.
-                // MerkleTree tamperedTree = new MerkleTree(hackedBlock.votes);
-                // hackedBlock.merkleRoot = tamperedTree.getRoot();
-
                 sendJsonResponse(t, 200, "{\"status\":\"partial_success\",\"message\":\"Data overwritten, but Merkle Root forgery FAILED!\"}");
             }
         }
